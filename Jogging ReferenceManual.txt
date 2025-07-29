@@ -1,0 +1,861 @@
+﻿Jogging.Rest
+- Auth Controller -
+## Overzicht
+De Auth Controller biedt authenticatie- en autorisatiefunctionaliteit voor het Jogging platform. Het behandelt gebruikersregistratie, inloggen, wachtwoordbeheer en e-mailbevestiging.
+## Basis-URL
+`/api/Auth`
+## Authenticatie
+- De meeste endpoints vereisen geen authenticatie
+- Enkele endpoints vereisen een geldig JWT token (aangegeven met `[Authorize]`)
+## Endpoints
+### 1. Token Verificatie
+**URL**: `GET /api/Auth/verify-token`  
+**Authenticatie**: Vereist (JWT token)  
+**Beschrijving**: Verifieert het huidige JWT token en retourneert gebruikersgegevens  
+**Response**: 
+- 200: Gebruikersgegevens
+- 500: Serverfout
+### 2. Inloggen
+**URL**: `POST /api/Auth/login`  
+**Body**: LogInRequestDTO  
+**Beschrijving**: Authenticeert een gebruiker en retourneert een JWT token  
+**Responses**:
+- 201: Succesvol ingelogd (bevat token)
+- 409: Authenticatiefout
+- 500: Serverfout
+### 3. Uitloggen
+**URL**: `POST /api/Auth/logout`  
+**Beschrijving**: Ongeldig maakt het huidige JWT token  
+**Response**: 
+- 201: Succesvol uitgelogd
+- 500: Serverfout
+### 4. Registreren
+**URL**: `POST /api/Auth/register`  
+**Body**: SignUpRequestDTO  
+**Beschrijving**: Registreert een nieuwe gebruiker  
+**Responses**:
+- 201: Succesvol geregistreerd
+- 400: Ongeldig wachtwoord
+- 409: E-mail bestaat al
+- 500: Serverfout
+### 5. Wachtwoord Wijzigen
+**URL**: `POST /api/Auth/change-password`  
+**Authenticatie**: Vereist  
+**Body**: PasswordChangeRequestDTO  
+**Beschrijving**: Wijzigt het wachtwoord van de ingelogde gebruiker  
+**Response**: 
+- 201: Wachtwoord gewijzigd
+- 500: Serverfout
+### 6. Wachtwoord Reset Aanvragen
+**URL**: `POST /api/Auth/request-password`  
+**Body**: EmailRequestDTO  
+**Beschrijving**: Verstuurt een wachtwoordresetlink naar het opgegeven e-mailadres  
+**Response**: 
+- 201: Resetlink verzonden
+- 500: Serverfout
+### 7. Wachtwoord Resetten
+**URL**: `POST /api/Auth/reset-password`  
+**Body**: PasswordResetRequestDTO  
+**Beschrijving**: Reset het wachtwoord met behulp van een reset token  
+**Responses**:
+- 201: Wachtwoord gereset
+- 409: Ongeldige token
+- 500: Serverfout
+### 8. E-mail Bevestiging
+**URL**: `POST /api/Auth/confirm-email`  
+**Body**: ConfirmTokenDto  
+**Beschrijving**: Bevestigt een e-mailadres met een token  
+**Responses**:
+- 201: E-mail bevestigd
+- 409: Ongeldige token
+- 500: Serverfout
+### 9. Dubbele E-mail Check
+**URL**: `POST /api/Auth/check-email`  
+**Body**: EmailRequestDTO  
+**Beschrijving**: Controleert of een e-mailadres al in gebruik is  
+**Responses**:
+- 201: E-mail beschikbaar
+- 409: E-mail bestaat al
+- 500: Serverfout
+## Foutafhandeling
+400: Ongeldige aanvraag 
+401: Ongeautoriseerd 
+403: Verboden 
+404: Niet gevonden 
+409: Conflict (bijv. dubbele e-mail) 
+500: Serverfout 
+## Beveiliging
+- JWT tokens worden gebruikt voor authenticatie
+- Wachtwoorden worden veilig opgeslagen (gehashed)
+- Tokens worden na uitloggen geblacklist
+- HTTPS wordt aanbevolen voor alle communicatie
+
+
+- Competition Controller -
+## Overzicht
+De Competition Controller biedt functionaliteit voor het beheren van hardloopwedstrijden. Het ondersteunt CRUD-operaties (aanmaken, lezen, bijwerken, verwijderen) voor wedstrijdgegevens met pagineringsondersteuning en verschillende filteropties.
+## Authenticatievereisten
+- Publieke endpoints vereisen geen authenticatie
+- Beheerinterfaces vereisen adminrechten (`Admin` rol)
+## Basis-URL
+`/api/Competition`
+## API Endpoints
+### 1. Wedstrijden Opvragen
+#### Openbare wedstrijden
+**URL**: `GET /api/Competition`
+**Query parameters**:
+- `searchValue` (string): Zoekterm
+- `startDate` (DateOnly): Startdatum filter
+- `endDate` (DateOnly): Einddatum filter
+- `PageNumber` (int): Paginanummer
+- `PageSize` (int): Items per pagina
+**Response headers**:
+- `X-Pagination`: Paginatie metadata
+**Responses**:
+- 200: Gepagineerde wedstrijdlijst
+- 404: Geen wedstrijden gevonden
+- 500: Serverfout
+#### Alle wedstrijden (Admin)
+**URL**: `GET /api/Competition/private`
+**Parameters**: Zelfde als publieke versie
+**Verschil**: Bevat ook niet-publieke wedstrijden
+### 2. Wedstrijddetails Opvragen
+**URL**: `GET /api/Competition/{competitionId}`
+**Pad parameters**:
+- `competitionId`: Wedstrijd-ID
+**Responses**:
+- 200: Wedstrijddetails
+- 404: Wedstrijd niet gevonden
+- 500: Serverfout
+### 3. Wedstrijd Aanmaken (Admin)
+**URL**: `POST /api/Competition`
+**Request body**: CompetitionRequestDTO
+**Responses**:
+- 201: Aangemaakte wedstrijd
+- 409: Afstandsconflict
+- 500: Serverfout
+### 4. Wedstrijd Bijwerken (Admin)
+**URL**: `PUT /api/Competition/{competitionId}`
+**Pad parameters**:
+- `competitionId`: Wedstrijd-ID
+**Request body**: CompetitionRequestDTO
+**Responses**: Zie aanmaakinterface
+### 5. Wedstrijd Verwijderen (Admin)
+**URL**: `DELETE /api/Competition/{competitionId}`
+**Pad parameters**:
+- `competitionId`: Wedstrijd-ID
+**Responses**:
+- 200: Succesvol verwijderd
+- 500: Serverfout
+## Foutafhandeling
+400: Ongeldig verzoek 
+401: Ongeautoriseerd 
+403: Verboden 
+404: Niet gevonden 
+409: Afstandsconflict 
+500: Serverfout 
+## Paginatie
+Paginatie-interfaces retourneren in headers:
+- TotalCount: Totaal aantal
+- PageSize: Items per pagina
+- CurrentPage: Huidige pagina
+- TotalPages: Totaal pagina's
+- HasNext/HasPrevious: Volgende/Vorige pagina beschikbaar
+
+
+- Payment Controller -
+## Overzicht
+De Payment Controller biedt functionaliteit voor het afhandelen van betalingen voor wedstrijdinschrijvingen. Het ondersteunt het genereren van betalingslinks en het verwerken van betalingsnotificaties.
+## Authenticatie
+- Betalingslink generatie vereist authenticatie
+- Betalingsnotificatie endpoint is publiek (wordt aangeroepen door betalingsprovider)
+## Basis-URL
+`/api/Payment`
+## Data Transfer Objects
+### PaymentNotificationDTO
+Wordt gebruikt voor betalingsnotificaties van de betalingsprovider.
+## Endpoints
+### 1. Betalingslink Genereren
+Genereert een betalingslink voor een wedstrijdinschrijving.
+
+
+**URL**: `POST /api/Payment/{competitionId}`
+**Parameters**:
+- `competitionId` (int): ID van de wedstrijd
+**Authenticatie**: Vereist (JWT token)
+**Response**:
+- 201 Created: Betalings-URL (string)
+- 404 Not Found: Inschrijving niet gevonden
+- 409 Conflict: Betalingsfout
+- 500 Server Error: Interne fout
+### 2. Betalingsnotificatie Verwerken
+Callback endpoint voor betalingsprovider om betalingen te bevestigen.
+
+
+**URL**: `POST /api/Payment/notify`
+**Query Parameters**: PaymentNotificationDTO
+**Authenticatie**: Geen
+**Response**:
+- 201 Created: Bevestiging ("OK")
+- 500 Server Error: Interne fout
+## Foutafhandeling
+- 404 Not Found: Wanneer inschrijving niet gevonden is
+- 409 Conflict: Bij betalingsspecifieke fouten
+- 500 Internal Server Error: Voor onverwachte serverfouten
+## Betalingsflow
+1. Gebruiker vraagt betalingslink aan via POST endpoint
+2. Systeem retourneert betalingslink
+3. Gebruiker voltooit betaling via externe provider
+4. Provider stuurt notificatie naar /notify endpoint
+5. Systeem verwerkt betaling en markeert inschrijving als betaald
+## Beveiliging
+- Betalingslink generatie is beschermd via JWT
+- Notificatie endpoint moet beveiligd worden via:
+  - IP whitelisting van betalingsprovider
+  - Handtekeningverificatie
+  - Andere provider-specifieke beveiligingsmaatregelen
+- Persoon Controller -
+## Overzicht
+De Person Controller biedt functionaliteit voor het beheren van persoonlijke gegevens in het systeem. Het ondersteunt CRUD-operaties voor persoonlijke profielen, met verschillende toegangsniveaus voor administrators en reguliere gebruikers.
+## Authenticatie
+- Alle endpoints vereisen authenticatie via JWT token
+- Sommige endpoints vereisen admin-rechten (aangegeven met `[Authorize(Roles = "Admin")]`)
+## Basis-URL
+`/api/Person`
+## Data Transfer Objects
+### PersonRequestDTO
+Gebruikt voor aanmaken en bijwerken van persoonlijke gegevens.
+### PersonResponseDTO
+Retourneert persoonlijke gegevens.
+### PersonEmailChangeRequestDto
+Gebruikt voor emailwijzigingen.
+## Endpoints
+### 1. Personen Ophalen
+#### Alle personen (gepagineerd)
+**URL**: `GET /api/Person`
+**Query Parameters**:
+- `PageNumber` (int): Paginanummer
+- `PageSize` (int): Items per pagina
+- `searchValue` (string): Zoekterm
+**Response Headers**:
+- `X-Pagination`: Paginatiemetadata
+**Response**:
+- 200 OK: Gepagineerde lijst van PersonResponseDTO
+- 404 Not Found: Geen personen gevonden
+- 500 Server Error: Interne fout
+#### Specifieke persoon
+**URL**: `GET /api/Person/{personId}`
+**Parameters**:
+- `personId` (int): Persoon-ID
+**Response**:
+- 200 OK: PersonResponseDTO
+- 404 Not Found: Persoon niet gevonden
+- 500 Server Error: Interne fout
+### 2. Persoon Aanmaken
+**URL**: `POST /api/Person`
+**Request Body**: PersonRequestDTO
+**Response**:
+- 201 Created: Aangemaakt PersonResponseDTO
+- 500 Server Error: Interne fout
+### 3. Persoon Bijwerken
+#### Basisgegevens
+**URL**: `PUT /api/Person/{personId}`
+**Parameters**:
+- `personId` (int): Persoon-ID
+**Request Body**: PersonRequestDTO
+**Response**:
+- 201 Created: Bijgewerkt PersonResponseDTO
+- 500 Server Error: Interne fout
+#### Emailadres
+**URL**: `PUT /api/Person/email/{personId}`
+**Parameters**:
+- `personId` (int): Persoon-ID
+**Request Body**: PersonEmailChangeRequestDto
+**Response**:
+- 201 Created: Bijgewerkt PersonResponseDTO
+- 409 Conflict: Email bestaat al
+- 500 Server Error: Interne fout
+### 4. Persoon Verwijderen
+#### Eigen account
+**URL**: `DELETE /api/Person`
+**Response**:
+- 200 OK: Succesbericht
+- 404 Not Found: Persoon niet gevonden
+- 500 Server Error: Interne fout
+#### Admin verwijdering
+**URL**: `DELETE /api/Person/private/{personId}`
+**Parameters**:
+- `personId` (int): Persoon-ID
+**Response**:
+- 200 OK: Succesbericht
+- 404 Not Found: Persoon niet gevonden
+- 500 Server Error: Interne fout
+## Foutafhandeling
+- 401 Unauthorized: Ongeldige authenticatie
+- 403 Forbidden: Ontbrekende rechten
+- 404 Not Found: Resource niet gevonden
+- 409 Conflict: Dubbele email
+- 500 Internal Server Error: Serverfout (gelogd)
+## Beveiliging
+- JWT authenticatie vereist voor alle endpoints
+- Cookie-based token management
+- Token blacklisting bij uitloggen
+- HTTPS aanbevolen
+## Paginering
+Endpoints met paginering retourneren metadata in X-Pagination header:
+- TotalCount
+- PageSize
+- CurrentPage
+- TotalPages
+- HasNext
+- HasPrevious
+- Profile Controller -
+## Overzicht
+De Profiel Controller biedt functionaliteit voor het beheren van gebruikersprofielen. Momenteel ondersteunt het alleen het bijwerken van gebruikersrollen door administrators.
+## Basis-URL
+`/api/Profile`
+## Authenticatie
+Alle endpoints vereisen:
+- Authenticatie via JWT token
+- Admin rolrechten
+## Data Transfer Objects
+### ProfileRequestDTO
+Gebruikt voor het bijwerken van profielgegevens.
+## Endpoints
+### 1. Gebruikersrol Bijwerken
+Wijzigt de rol van een specifieke gebruiker (admin-only).
+
+
+**URL**: `PUT /api/Profile/{personId}`
+**Parameters**:
+- `personId` (int): ID van de gebruiker wiens rol moet worden bijgewerkt
+**Response**:
+- 200 OK: Succesbericht
+- 401 Unauthorized: Ontbrekende of ongeldige authenticatie
+- 403 Forbidden: Gebruiker heeft geen adminrechten
+- 500 Internal Server Error: Serverfout bij verwerking
+## Foutafhandeling
+- **401 Unauthorized**: Ongeldige of ontbrekende authenticatietoken
+- **403 Forbidden**: Gebruiker heeft onvoldoende rechten
+- **500 Internal Server Error**: Interne serverfout (details worden gelogd)
+## Beveiliging
+- Endpoints zijn beschermd via JWT-authenticatie
+- Vereist "Admin" rol voor toegang
+- Gebruikt HTTPS voor beveiligde communicatie
+- Ranking Controller -
+## Overzicht
+De Ranking Controller biedt functionaliteit voor het ophalen van ranglijsten in het systeem. Momenteel ondersteunt het alleen het ophalen van alle ranglijsten met pagineringsmogelijkheden.
+## Basis-URL
+`/api/Ranking`
+## Authenticatie
+Dit endpoint vereist momenteel geen authenticatie.
+## Data Structure
+Het endpoint retourneert een lijst van dictionaries waar elke dictionary een ranglijstgroepering vertegenwoordigt. Elke dictionary bevat:
+- Key: String die het groeperingscriterium aangeeft
+- Value: Lijst van RankingDom objecten voor die groep
+## Endpoints
+### 1. Haal Alle Ranglijsten Op
+Retourneert gepagineerde ranglijsten gegroepeerd op verschillende criteria.
+
+
+**URL**: `GET /api/Ranking`
+**Query Parameters**:
+- `PageNumber` (int): Paginanummer (standaard 1)
+- `PageSize` (int): Aantal items per pagina (standaard 10)
+**Response**:
+- 200 OK: Lijst van dictionaries met ranglijstgegevens
+- 404 Not Found: Geen ranglijstgegevens beschikbaar
+- 500 Internal Server Error: Interne serverfout
+## Foutafhandeling
+- **404 Not Found**: Wanneer er geen ranglijstgegevens beschikbaar zijn
+- **500 Internal Server Error**: Voor onverwachte serverfouten (wordt gelogd)
+
+
+## Paginering
+Het endpoint ondersteunt paginering via de standaard QueryStringParameters:
+- Paginatie-informatie wordt geretourneerd in de response headers
+- Standaard paginagrootte kan variëren afhankelijk van serverconfiguratie
+- Registration Controller -
+## Overzicht
+De Registration Controller biedt functionaliteit voor het beheren van inschrijvingen voor wedstrijden. Het ondersteunt registratieprocessen voor zowel administrators als reguliere gebruikers, met verschillende rechtenniveaus.
+## Authenticatie
+- Standaard endpoints vereisen authenticatie
+- Endpoints gemarkeerd als "private" vereisen admin-rechten
+## Basis-URL
+`/api/Registration`
+## Data Transfer Objects
+### RegistrationRequestDTO
+Gebruikt voor nieuwe inschrijvingen.
+### RegistrationResponseDTO
+Bevat inschrijvingsinformatie.
+### Wijzigings-DTO's
+## Endpoints
+### 1. Inschrijvingen Ophalen
+#### Admin - Alle inschrijvingen
+**URL**: `GET /api/Registration/private`
+**Query Parameters**:
+- personId (int): Filter op deelnemer
+- competitionId (int): Filter op wedstrijd  
+- searchValue (string): Zoekterm
+- withRunNumber (bool): Inclusief startnummers
+- PageNumber (int): Paginanummer
+- PageSize (int): Items per pagina
+**Response**:
+- 200 OK: Gepagineerde lijst van RegistrationResponseDTO
+- 204 No Content: Geen resultaten
+- 400 Bad Request: Ongeldig verzoek
+#### Persoonlijke inschrijvingen
+**URL**: `GET /api/Registration`
+**Query Parameters**:
+- PageNumber (int): Paginanummer
+- PageSize (int): Items per pagina
+- withRunNumber (bool): Inclusief startnummers
+**Response**:
+- 200 OK: Gepagineerde lijst van RegistrationResponseDTO
+- 204 No Content: Geen inschrijvingen
+- 400 Bad Request: Ongeldig verzoek
+### 2. Nieuwe Inschrijving
+#### Admin registratie
+**URL**: `POST /api/Registration/private`
+**Request Body**: RegistrationRequestDTO
+**Gedrag**:
+- Gebruikt bestaande deelnemer als PersonId != -1
+- Maakt nieuwe deelnemer aan als Person object meegegeven
+- Verstuurt email als emailadres meegegeven
+**Response**:
+- 201 Created: Nieuwe RegistrationResponseDTO
+- 409 Conflict: Dubbele email/inschrijving
+- 500 Server Error: Interne fout
+#### Standaard registratie  
+**URL**: `POST /api/Registration`
+**Request Body**: RegistrationRequestDTO
+**Gedrag**:
+- Gebruikt ingelogde deelnemer als JWT aanwezig
+- Anders vergelijkbaar met admin versie
+**Response**: Zie admin versie
+### 3. Inschrijving Verwijderen
+#### Verwijder eigen inschrijving
+**URL**: `DELETE /api/Registration/{competitionId}`
+**Parameters**:
+- competitionId (int): Wedstrijd-ID
+**Response**:
+- 200 OK: Succes
+- 400 Bad Request: Fout
+#### Admin verwijdering
+**URL**: `DELETE /api/Registration/private/{registrationId}`
+**Parameters**:
+- registrationId (int): Inschrijvings-ID
+**Response**: Zie bovenstaand
+### 4. Inschrijving Wijzigen
+#### Betaalstatus bijwerken (admin)
+**URL**: `PUT /api/Registration/paid/{registrationId}`
+**Parameters**:
+- registrationId (int): Inschrijvings-ID
+**Request Body**: RegistrationModifyPaidDTO
+**Response**:
+- 201 Created: Succes
+- 500 Server Error: Fout
+#### Startnummer bijwerken (admin)  
+**URL**: `PUT /api/Registration/runnumber/{registrationId}`
+**Parameters**:
+- registrationId (int): Inschrijvings-ID
+**Request Body**: RegistrationModifyRunNumberDTO
+**Response**: Zie bovenstaand
+#### Afstand wijzigen
+**URL**: `PUT /api/Registration/competitionpercategory/{registrationId}`
+**Parameters**:
+- registrationId (int): Inschrijvings-ID
+**Request Body**: RegistrationModifyCompetitionPerCategoryDTO
+**Response**: Zie bovenstaand
+#### Admin afstand wijzigen
+**URL**: `PUT /api/Registration/private/competitionpercategory/{registrationId}`
+**Extra Query Parameter**:
+- personId (int): Verplicht deelnemer-ID
+**Response**: Zie bovenstaand
+## Foutafhandeling
+- 400 Bad Request: Ongeldige invoer
+- 401 Unauthorized: Ongeautoriseerd  
+- 403 Forbidden: Ontbrekende rechten
+- 404 Not Found: Resource niet gevonden
+- 409 Conflict: Dubbele waarde
+- 500 Server Error: Interne fout
+## Paginering
+Endpoints met paginering retourneren metadata in X-Pagination header:
+- TotalCount
+- PageSize
+- CurrentPage  
+- TotalPages
+- HasNext
+- HasPrevious
+- Result Controller -
+## Overzicht
+De Result Controller biedt functionaliteit voor het beheren van wedstrijdresultaten. Het ondersteunt het ophalen van resultaten met paginering en het bijwerken van looptijden.
+## Authenticatie
+Sommige endpoints vereisen authenticatie en admin-rechten.
+## Basis-URL
+`/api/Result`
+## Data Transfer Objects
+### CompetitionResultRequestDTO
+Gebruikt voor bulk-updates van resultaten.
+### ResultResponseDTO
+Bevat wedstrijdresultaat informatie.
+### ResultGunTimeRequestDto
+Voor bijwerken starttijd.
+### ResultRuntimeRequestDto
+Voor bijwerken looptijd.
+## Endpoints
+### 1. Alle Resultaten Ophalen
+Haalt alle wedstrijdresultaten op.
+
+
+**URL**: `GET /api/Result/all-results`
+**Response**:
+- 200 OK: Lijst van ResultResponseDTO
+- 404 Not Found: Geen resultaten gevonden
+- 500 Server Error: Interne fout
+### 2. Persoonlijke Resultaten Ophalen
+Haalt gepagineerde resultaten op voor ingelogde gebruiker.
+
+
+**URL**: `GET /api/Result`
+**Query Parameters**:
+- PageNumber (int): Paginanummer
+- PageSize (int): Items per pagina
+**Response Headers**:
+- X-Pagination: Paginatiemetadata
+**Response**:
+- 200 OK: Gepagineerde lijst van ResultResponseDTO
+- 404 Not Found: Geen resultaten gevonden
+- 500 Server Error: Interne fout
+
+
+### 3. Wedstrijdresultaten Ophalen
+Haalt gefilterde resultaten op voor specifieke wedstrijd.
+
+
+**URL**: `GET /api/Result/{competitionId}`
+**Parameters**:
+- competitionId (int): Wedstrijd-ID
+**Query Parameters**:
+- PageNumber (int): Paginanummer
+- PageSize (int): Items per pagina  
+- gender (char): Filter op geslacht
+- ageCategory (string): Filter op leeftijdscategorie
+- distanceName (string): Filter op afstand
+**Response Headers**:
+- X-Pagination: Paginatiemetadata
+**Response**:
+- 200 OK: Gepagineerde lijst van ResultResponseDTO
+- 204 No Content: Geen resultaten gevonden
+- 500 Server Error: Interne fout
+
+
+### 4. Bulk Update Resultaten
+Upload resultaten via bestand (admin-only).
+
+
+**URL**: `POST /api/Result/{competitionId}`
+**Parameters**:
+- competitionId (int): Wedstrijd-ID
+**Request Body**: CompetitionResultRequestDTO (form-data met bestand)
+**Response**:
+- 201 Created: Succesbericht
+- 500 Server Error: Interne fout
+### 5. Looptijd Bijwerken
+Update looptijd voor registratie (admin-only).
+
+
+**URL**: `PUT /api/Result/runtime/{registrationId}`
+**Parameters**:
+- registrationId (int): Registratie-ID
+**Request Body**: ResultRuntimeRequestDto
+**Response**:
+- 201 Created: Succesbericht
+- 500 Server Error: Interne fout
+### 6. Starttijd Bijwerken 
+Update starttijd voor wedstrijd (admin-only).
+
+
+**URL**: `PUT /api/Result/guntime/{competitionId}`
+**Parameters**:
+- competitionId (int): Wedstrijd-ID
+**Request Body**: ResultGunTimeRequestDto
+**Response**:
+- 201 Created: Succesbericht  
+- 500 Server Error: Interne fout
+## Foutafhandeling
+- 401 Unauthorized: Ongeautoriseerde toegang
+- 403 Forbidden: Ontbrekende rechten
+- 404 Not Found: Resource niet gevonden
+- 500 Internal Server Error: Serverfout (gelogd)
+## Paginering
+Endpoints met paginering retourneren metadata in X-Pagination header:
+- TotalCount
+- PageSize  
+- CurrentPage
+- TotalPages
+- HasNext
+- HasPrevious
+- Running Club Controller -
+## Overzicht
+De Runningclub Controller biedt endpoints voor het beheren van hardloopclubs in het systeem. Het ondersteunt CRUD-bewerkingen en aanvullende functionaliteit voor club registratie.
+## Basis-URL
+`/api/Runningclub/`
+## Data Transfer Objects
+### RunningclubRequest
+Gebruikt voor het aanmaken en bijwerken van hardloopclubs.
+### RunningclubResponse
+Geretourneerd bij het ophalen van clubinformatie.
+## Endpoints
+### 1. Alle Clubs Ophalen
+Haalt een lijst van alle hardloopclubs op.
+
+
+**URL**: `GET /api/Runningclub/`
+**Response**:
+- 200 OK: Lijst<RunningclubResponse>
+- 404 Not Found: Als er geen clubs bestaan
+### 2. Alle Clubs Met Data Ophalen
+Haalt clubs op met aanvullende data.
+
+
+**URL**: `GET /api/Runningclub/get-with-data`
+**Response**:
+- 200 OK: Lijst<RunningClubWithData>
+- 404 Not Found: Als er geen clubs bestaan
+### 3. Club Opvragen Op ID
+Haalt een specifieke club op aan de hand van ID.
+
+
+**URL**: `GET /api/Runningclub/{id}`
+**Parameters**:
+- id (int): Club ID
+**Response**:
+- 200 OK: RunningclubResponse
+- 404 Not Found: Als club niet bestaat
+### 4. Club Opvragen Op Naam
+Haalt een club op aan de hand van naam.
+
+
+**URL**: `GET /api/Runningclub/name/{naam}`
+**Parameters**:
+- naam (string): Clubnaam
+**Response**:
+- 200 OK: RunningclubResponse
+- 404 Not Found: Als club niet bestaat
+### 5. Club Opvragen Op Gebruikers-ID
+Haalt een club op die geassocieerd is met een gebruiker.
+
+
+**URL**: `GET /api/Runningclub/user/{gebruikersId}`
+**Parameters**:
+- gebruikersId (int): Gebruikers-ID
+**Response**:
+- 200 OK: RunningclubResponse
+- 404 Not Found: Als er geen club geassocieerd is
+### 6. Club Aanmaken
+Maakt een nieuwe hardloopclub aan.
+
+
+**URL**: `POST /api/Runningclub/`
+**Request Body**: RunningclubRequest
+**Response**:
+- 200 OK: Succesbericht
+- 400 Bad Request: Ongeldige invoer
+### 7. Persoon Registreren Bij Club
+Registreert een gebruiker bij een club.
+
+
+**URL**: `POST /api/Runningclub/register`
+**Query Parameters**:
+- gebruikersId (int): Gebruikers-ID
+- clubId (int): Club-ID
+**Response**:
+- 200 OK: Succesbericht
+- 400 Bad Request: Ongeldige invoer
+### 8. Club Bijwerken
+Werkt een bestaande club bij.
+
+
+**URL**: `PUT /api/Runningclub/{id}`
+**Parameters**:
+- id (int): Club-ID
+**Request Body**: RunningclubRequest
+**Response**:
+- 200 OK: Succesbericht
+- 400 Bad Request: Ongeldige invoer
+### 9. Club Verwijderen
+Verwijdert een club.
+
+
+**URL**: `DELETE /api/Runningclub/{id}`
+**Parameters**:
+- id (int): Club-ID
+**Response**:
+- 200 OK: Succesbericht
+- 400 Bad Request: Ongeldige invoer
+## Foutafhandeling
+De API retourneert passende HTTP-statuscodes met foutmeldingen:
+- 400 Bad Request: Ongeldige invoerdata
+- 404 Not Found: Resource niet gevonden
+- 500 Internal Server Error: Serverfouten (bericht bevat details)
+- School Controller -
+## Overzicht
+De School Controller biedt RESTful endpoints voor het beheren van schoolentiteiten in het systeem. Het ondersteunt CRUD-bewerkingen (Create, Read, Update, Delete) voor scholen, met paginering ondersteuning voor het weergeven van scholen.
+## Authenticatie
+Alle endpoints vereisen authenticatie. Voeg een geldig JWT-token toe in de Authorization-header.
+## Basis-URL
+`/api/School`
+### SchoolRequestDTO
+Wordt gebruikt voor het aanmaken en bijwerken van scholen.
+### SchoolResponseDTO
+Wordt geretourneerd bij het ophalen van schoolinformatie.
+## Endpoints
+### 1. Haal Alle Scholen Op
+Haalt een gepagineerde lijst van alle scholen op.
+
+
+**URL**: `GET /api/School`
+**Query Parameters**:
+- `PageNumber` (int): Paginanummer om op te halen (standaard: 1)
+- `PageSize` (int): Aantal items per pagina (standaard: 10)
+**Response**:
+- 200 OK: Retourneert PagedList<SchoolResponseDTO>
+- 404 Not Found: Als er geen scholen bestaan
+- 500 Internal Server Error: Voor andere fouten
+**Response Headers**:
+- `X-Pagination`: JSON met paginatiemetadata
+### 2. Haal School op via ID
+Haalt een specifieke school op aan de hand van het ID.
+
+
+**URL**: `GET /api/School/{schoolId}`
+**Parameters**:
+- `schoolId` (int): ID van de op te halen school
+**Response**:
+- 200 OK: Retourneert SchoolResponseDTO
+- 404 Not Found: Als school met opgegeven ID niet bestaat
+- 500 Internal Server Error: Voor andere fouten
+### 3. Maak School Aan
+Maakt een nieuwe school aan.
+
+
+**URL**: `POST /api/School`
+**Request Body**: SchoolRequestDTO
+**Response**:
+- 201 Created: Retourneert de aangemaakte SchoolResponseDTO
+- 500 Internal Server Error: Als aanmaken mislukt
+### 4. Werk School Bij
+Werkt een bestaande school bij.
+
+
+**URL**: `PUT /api/School/{schoolId}`
+**Parameters**:
+- `schoolId` (int): ID van de bij te werken school
+**Request Body**: SchoolRequestDTO
+**Response**:
+- 200 OK: Retourneert bijgewerkte SchoolResponseDTO
+- 500 Internal Server Error: Als bijwerken mislukt
+### 5. Verwijder School
+Verwijdert een school.
+
+
+**URL**: `DELETE /api/School/{schoolId}`
+**Parameters**:
+- `schoolId` (int): ID van de te verwijderen school
+**Response**:
+- 200 OK: Als verwijderen slaagt
+- 500 Internal Server Error: Als verwijderen mislukt
+
+
+## Foutafhandeling
+De API retourneert geschikte HTTP-statuscodes met foutmeldingen in de response body wanneer er fouten optreden. Veelvoorkomende foutresponses zijn:
+
+
+- 401 Unauthorized: Ontbrekend of ongeldig authenticatietoken
+- 404 Not Found: Gevraagde resource bestaat niet
+- 500 Internal Server Error: Onverwachte serverfout (details worden aan serverzijde gelogd)
+
+
+## Paginering
+Het Haal Alle Scholen Op endpoint ondersteunt paginering via query parameters. De response bevat paginatiemetadata in de `X-Pagination` header met:
+
+
+- TotalCount: Totaal aantal items
+- PageSize: Aantal items per pagina
+- CurrentPage: Huidige paginanummer
+- TotalPages: Totaal aantal pagina's
+- HasNext: Of er een volgende pagina is
+- HasPrevious: Of er een vorige pagina is
+Jogging.Infrastructure
+BackupService
+## **1. Overzicht**
+De `BackupService` biedt een complete oplossing voor back-up- en herstelfunctionaliteit binnen de Jogging-applicatie. Deze service combineert database-export met bestandsbeheer voor een volledige applicatieback-up.
+## **2. Configuratievereisten**
+Voor een correcte werking vereist de service de volgende configuratie in `appsettings.json`:
+
+
+- **BackupSettings**:
+  - Tijdelijke map voor back-upbewerkingen
+  - Pad naar MySQL utilities (`mysqldump` en `mysql`)
+  
+- **Databaseverbinding**:
+  - Complete connection string voor database toegang
+## **3. Functionaliteiten**
+### **Back-up maken**
+1. Creëert een tijdelijk werkgebied
+2. Exporteert de volledige database naar SQL-formaat
+3. Archiveert belangrijke applicatie-assets
+4. Verpakt alles in een gecomprimeerd ZIP-bestand
+### **Back-up herstellen**
+1. Verwerkt een geüpload back-upbestand
+2. Extraheert de inhoud naar een tijdelijke locatie
+3. Identificeert en importeert de database-inhoud
+4. Plaatst alle assets terug op hun oorspronkelijke locatie
+5. Voert een volledige opschoning uit na voltooiing
+## **4. Platformondersteuning**
+De service is ontworpen voor cross-platform gebruik en ondersteunt zowel Windows- als Linux-omgevingen, met automatische detectie van het besturingssysteem voor optimale procesafhandeling.
+## **5. Gebruiksaanwijzing**
+De service is direct klaar voor gebruik na correcte configuratie en vereist geen aanvullende initialisatie. Voorbeeld implementaties zijn beschikbaar in de bijbehorende controller klassen.
+Dockerfile
+Jogging.Api - Referentiehandleiding voor Docker-containerisatie
+1. Overzicht
+Dit document beschrijft de Docker-containerisatie configuratie voor het Jogging.Api-project. Het richt zich op het bieden van een reproduceerbare implementatie voor ontwikkelings-, test- en productieomgevingen.
+
+
+2. Dockerfile-configuratie
+2.1 Basisruntime-image (base)
+Gebaseerd op .NET 9.0 ASP.NET-runtime.
+Installeert MySQL-client tools voor databasebeheer.
+Werkmap ingesteld op /app met blootstelling van poorten 80 (HTTP) en 443 (HTTPS).
+
+
+2.2 SDK-image met Node.js (with-node)
+Voegt Node.js v20.x toe aan de .NET 9.0 SDK-image.
+Ondersteunt frontend-resource bouw indien nodig.
+
+
+2.3 Bouwfase (build)
+Optimaliseert laag caching door eerst alleen het projectbestand te kopiëren.
+Voert een restore en build uit in de Release-configuratie.
+
+
+2.4 Publicatiefase (publish)
+Genereert een geoptimaliseerd publicatiepakket.
+Schakelt de generatie van een zelfstandig uitvoerbaar bestand uit.
+
+
+2.5 Eindimage (final)
+Combineert de lichtgewicht basisruntime met de gepubliceerde output.
+Start de applicatie via dotnet Jogging.Api.dll.
+
+
+3. Belangrijke parameters
+
+
+Parameter/Variabele
+	Beschrijving
+	Standaardwaarde
+	BUILD_CONFIGURATION
+	Bouwconfiguratie (Debug/Release)
+	Release

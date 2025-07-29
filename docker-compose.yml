@@ -1,0 +1,51 @@
+services:
+#  mysqldb:
+#    image: mysql:latest
+#    restart: unless-stopped
+#    env_file: ./.env
+#    environment:
+#      - MYSQL_ROOT_PASSWORD=$MYSQLDB_ROOT_PASSWORD
+#      - MYSQL_DATABASE=$MYSQLDB_DATABASE
+#    ports:
+#      - $MYSQLDB_LOCAL_PORT:$MYSQLDB_DOCKER_PORT
+#    volumes:
+#      - db:/var/lib/mysql
+#      - ./database:/docker-entrypoint-initdb.d
+#    networks:
+#      - backend
+
+  
+  jogging.api:
+    build: ./jogging.api
+    restart: unless-stopped
+    env_file: ./.env
+    ports:
+      - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT
+      - $NET_LOCAL_PORT:$NET_DOCKER_PORT
+      - $NET_S_LOCAL_PORT:$NET_S_DOCKER_PORT
+    environment:
+      - DB_HOST=cigrit.fortiddns.com
+      - DB_PORT=21003
+      - DB_USER=azuredestroyers
+      - DB_PASSWORD=azuredestroyers
+      - DB_NAME=NieuweTechnologie
+      - CLIENT_ORIGIN=$CLIENT_ORIGIN
+    networks:
+      - backend
+      - frontend
+
+  jogging-ui:
+    depends_on:
+      - jogging.api
+    build:
+      context: ./jogging-ui
+      args:
+        - REACT_APP_API_BASE_URL=$CLIENT_API_BASE_URL
+    ports:
+      - $REACT_LOCAL_PORT:$REACT_DOCKER_PORT
+    networks:
+      - frontend  
+
+networks:
+  backend:
+  frontend:

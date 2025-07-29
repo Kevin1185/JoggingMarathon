@@ -1,0 +1,365 @@
+﻿openapi: 3.0.3
+info:
+  title: Jogging API
+  description: API for managing jogging competitions, registrations and user profiles
+  version: 1.0.0
+  contact:
+    email: support@joggingapi.com
+
+servers:
+  - url: http://localhost:5187
+    description: Local development server
+  - url: https://api.jogging.com/v1
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and JWT token management
+  - name: Users
+    description: User profile management
+  - name: Competitions
+    description: Jogging competitions management
+  - name: Registrations
+    description: Competition registration management
+  - name: Results
+    description: Competition results management
+
+paths:
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      description: Authenticates user and returns JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: X-Access-Token=abc123; Path=/; HttpOnly; SameSite=Strict
+        '401':
+          description: Unauthorized - Invalid credentials
+
+  /api/users:
+    get:
+      tags: [Users]
+      summary: Get all users
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PersonResponse'
+        '401':
+          description: Unauthorized
+        '429':
+          description: Too many requests
+
+  /api/competitions:
+    get:
+      tags: [Competitions]
+      summary: Get competitions list
+      parameters:
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: List of competitions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompetitionResponse'
+    post:
+      tags: [Competitions]
+      summary: Create new competition
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompetitionRequest'
+      responses:
+        '201':
+          description: Competition created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetitionResponse'
+        '400':
+          description: Invalid input
+
+  /api/registrations:
+    post:
+      tags: [Registrations]
+      summary: Register for competition
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationRequest'
+      responses:
+        '201':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationResponse'
+        '400':
+          description: Invalid registration data
+
+  /api/results:
+    post:
+      tags: [Results]
+      summary: Submit competition result
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResultRequest'
+      responses:
+        '201':
+          description: Result submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultResponse'
+        '400':
+          description: Invalid result data
+
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          example: P@ssw0rd!
+      required: [email, password]
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        expiresIn:
+          type: integer
+          example: 3600
+        userId:
+          type: integer
+          example: 1
+
+    PersonResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        role:
+          type: string
+          enum: [user, admin]
+          example: user
+
+    CompetitionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Spring Marathon
+        date:
+          type: string
+          format: date-time
+          example: "2023-05-15T09:00:00Z"
+        address:
+          $ref: '#/components/schemas/AddressResponse'
+
+    CompetitionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Summer Sprint
+        date:
+          type: string
+          format: date-time
+          example: "2023-07-20T08:00:00Z"
+        address:
+          $ref: '#/components/schemas/AddressRequest'
+      required: [name, date]
+
+    AddressResponse:
+      type: object
+      properties:
+        street:
+          type: string
+          example: Main Street
+        houseNumber:
+          type: string
+          example: "123"
+        city:
+          type: string
+          example: Metropolis
+        zipCode:
+          type: string
+          example: "1000"
+
+    AddressRequest:
+      type: object
+      properties:
+        street:
+          type: string
+          example: Park Avenue
+        houseNumber:
+          type: string
+          example: "456"
+        city:
+          type: string
+          example: Gotham
+        zipCode:
+          type: string
+          example: "2000"
+      required: [street, city, zipCode]
+
+    RegistrationResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        competitionId:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        runNumber:
+          type: integer
+          example: 42
+        paid:
+          type: boolean
+          example: true
+
+    RegistrationRequest:
+      type: object
+      properties:
+        competitionId:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        categoryId:
+          type: integer
+          example: 2
+      required: [competitionId, userId, categoryId]
+
+    ResultResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        registrationId:
+          type: integer
+          example: 1
+        time:
+          type: number
+          format: float
+          example: 42.5
+        position:
+          type: integer
+          example: 3
+
+    ResultRequest:
+      type: object
+      properties:
+        registrationId:
+          type: integer
+          example: 1
+        time:
+          type: number
+          format: float
+          example: 42.5
+      required: [registrationId, time]
+
+  parameters:
+    PageNumber:
+      name: pageNumber
+      in: query
+      description: Page number (1-based)
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: pageSize
+      in: query
+      description: Number of items per page
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authentication using Authorization header or X-Access-Token cookie
+
+  headers:
+    X-Pagination:
+      schema:
+        type: string
+      description: Pagination metadata
+

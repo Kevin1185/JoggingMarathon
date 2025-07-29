@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<!-- “Microsoft.AspNetCore.App” içine, IWebHostEnvironment ve IConfiguration gibi
+       ASP.NET Core altyapı tipleri dahildir. Bu sayede ekstra Abstractions paketine ihtiyacımız kalmaz. -->
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+		<!-- BackupService’in MySqlConnector’a ihtiyacı var -->
+		<PackageReference Include="MySqlConnector" Version="2.4.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- Diğer katmanları referanslıyoruz -->
+		<ProjectReference Include="..\Jogging.Domain\Jogging.Domain.csproj" />
+		<ProjectReference Include="..\Jogging.Persistence\Jogging.Persistence.csproj" />
+	</ItemGroup>
+
+</Project>

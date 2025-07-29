@@ -1,0 +1,13 @@
+Diagnostics
+
+1. Test "get competitions" from swagger
+
+http://192.168.1.163:5187/swagger
+
+2. Test website:
+
+http://192.168.1.163:8888/
+
+use F12
+
+$
